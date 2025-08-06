@@ -5,7 +5,7 @@ import { insertCalendarSchema, insertEventSchema } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { google } from 'googleapis';
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "http://localhost:5000/auth/google/callback";
 
@@ -160,7 +160,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userCalendars = await storage.getUserCalendars(userId);
 
       const timeMin = new Date().toISOString();
-      const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // Next 7 days
+      const DAYS_TO_SYNC = 7;
+      const MS_PER_DAY = 24 * 60 * 60 * 1000;
+      const timeMax = new Date(Date.now() + DAYS_TO_SYNC * MS_PER_DAY).toISOString();
 
       let syncedEventsCount = 0;
       
@@ -232,10 +234,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = req.user.claims.sub;
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
       const todayEvents = await storage.getUserEvents(userId, today, tomorrow);
       

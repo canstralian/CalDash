@@ -132,8 +132,14 @@ let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
-    listener(memoryState)
+  // Create a copy to avoid issues if listeners array is modified during iteration
+  const currentListeners = [...listeners]
+  currentListeners.forEach((listener) => {
+    try {
+      listener(memoryState)
+    } catch (error) {
+      console.error('Toast listener error:', error)
+    }
   })
 }
 

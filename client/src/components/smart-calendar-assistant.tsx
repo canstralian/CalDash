@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Clock, Calendar, AlertCircle, CheckCircle, Plus } from "lucide-react";
 import { Event } from "@/lib/types";
 
