@@ -111,7 +111,7 @@ export function TimeAllocationChart() {
               return (
                 <div 
                   key={item.type} 
-                  className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200 animate-fade-in"
+                  className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200 animate-fade-in"
                   style={{ animationDelay: `${index * 0.1 + 0.5}s` }}
                 >
                   <div className={`w-4 h-4 ${item.color} rounded-full shadow-sm`}></div>

@@ -3,7 +3,7 @@ import { MetricCards } from "@/components/metric-cards";
 import { TimeAllocationChart } from "@/components/time-allocation-chart";
 import { ProductivityChart } from "@/components/productivity-chart";
 import { QuickActions } from "@/components/quick-actions";
-import { UpcomingEvents } from "@/components/upcoming-events";
+import UpcomingEvents from "@/components/upcoming-events";
 import { CalendarPreview } from "@/components/calendar-preview";
 
 export function Dashboard() {
@@ -11,12 +11,12 @@ export function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header Section */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="animate-fade-in">
-            <h1 className="text-3xl font-bold text-[color:var(--text-dark)] mb-2 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[color:var(--text-dark)] mb-2 tracking-tight">
               Good morning, Alex! 👋
             </h1>
-            <p className="text-[color:var(--text-medium)] text-lg">
+            <p className="text-[color:var(--text-medium)] text-base sm:text-lg">
               Here's what's happening with your productivity today
             </p>
           </div>
@@ -24,14 +24,14 @@ export function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-8">
         {/* Metrics Overview */}
         <section className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <MetricCards />
         </section>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
           <section className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
             <TimeAllocationChart />
           </section>
@@ -42,12 +42,12 @@ export function Dashboard() {
         </div>
 
         {/* Actions and Events */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <section className="lg:col-span-1 animate-slide-up" style={{ animationDelay: '0.5s' }}>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
+          <section className="xl:col-span-1 animate-slide-up" style={{ animationDelay: '0.5s' }}>
             <QuickActions />
           </section>
           
-          <section className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <section className="xl:col-span-2 animate-slide-up" style={{ animationDelay: '0.6s' }}>
             <UpcomingEvents />
           </section>
         </div>

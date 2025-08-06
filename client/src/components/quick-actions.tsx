@@ -57,12 +57,12 @@ export function QuickActions() {
   ];
 
   return (
-    <div className="glass rounded-xl p-6 hover-lift transition-all duration-300 animate-fade-in border border-white/20">
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-[color:var(--text-dark)] mb-2">
+    <div className="glass rounded-xl p-4 sm:p-6 hover-lift transition-all duration-300 animate-fade-in border border-white/20">
+      <div className="mb-4 sm:mb-6">
+        <h3 className="text-lg sm:text-xl font-bold text-[color:var(--text-dark)] mb-2">
           Quick Actions
         </h3>
-        <p className="text-sm text-[color:var(--text-medium)]">
+        <p className="text-xs sm:text-sm text-[color:var(--text-medium)]">
           Boost your productivity with one-click actions
         </p>
       </div>

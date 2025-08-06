@@ -80,6 +80,28 @@
     @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white;
   }
 
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    .glass {
+      backdrop-filter: blur(12px) saturate(180%);
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .hover-lift:hover {
+      transform: none; /* Disable hover effects on mobile */
+    }
+    
+    /* Reduce animations on mobile for better performance */
+    @media (prefers-reduced-motion: reduce) {
+      .animate-fade-in,
+      .animate-slide-up,
+      .animate-scale-in,
+      .animate-float {
+        animation: none;
+      }
+    }
+  }
+
   /* Glass morphism effect */
   .glass {
     backdrop-filter: blur(16px) saturate(180%);

@@ -7,6 +7,49 @@ interface MetricCardProps {
   change: string;
   isPositive: boolean;
   icon: React.ReactNode;
+  description: string;
+}
+
+function MetricCard({ title, value, change, isPositive, icon, description }: MetricCardProps) {
+  return (
+    <div className="glass rounded-xl p-4 sm:p-6 hover-lift transition-all duration-300 border border-white/20">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="p-2 sm:p-2.5 bg-blue-100 rounded-lg text-blue-600">
+            {icon}
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-semibold text-[color:var(--text-dark)]">
+              {title}
+            </h3>
+            <p className="text-xs sm:text-sm text-[color:var(--text-light)]">
+              {description}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-end justify-between">
+        <div className="text-2xl sm:text-3xl font-bold text-[color:var(--text-dark)]">
+          {value}
+        </div>
+        <div className={`flex items-center space-x-1 text-xs sm:text-sm font-medium ${
+          isPositive ? 'text-green-600' : 'text-red-600'
+        }`}>
+          {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+          <span>{change}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface MetricCardProps {
+  title: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  icon: React.ReactNode;
   description?: string;
 }
 
@@ -93,7 +136,7 @@ export function MetricCards() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       {metrics.map((metric, index) => (
         <div
           key={metric.title}
