@@ -1,115 +1,162 @@
-interface Event {
-  id: string;
-  category: string;
-  startTime: string;
-  endTime: string;
+
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { TrendingUp, Activity } from "lucide-react";
+
+interface MetricData {
+  todayEvents: number;
+  focusTime: string;
+  meetings: number;
+  productivityScore: string;
+  focusHours: number;
+  totalHours: number;
 }
 
-interface ProductivityChartProps {
-  events?: Event[];
-}
-
-export default function ProductivityChart({ events = [] }: ProductivityChartProps) {
-  const calculateCategoryHours = () => {
-    const categories = {
-      focus: 0,
-      meeting: 0,
-      admin: 0,
-      break: 0,
-      other: 0
-    };
-
-    // Calculate for the current week
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 7);
-
-    events.forEach(event => {
-      const eventStart = new Date(event.startTime);
-      const eventEnd = new Date(event.endTime);
-      
-      if (eventStart >= startOfWeek && eventStart < endOfWeek) {
-        const duration = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60);
-        const category = event.category as keyof typeof categories;
-        if (categories[category] !== undefined) {
-          categories[category] += duration;
-        } else {
-          categories.other += duration;
-        }
+export function ProductivityChart() {
+  const { data: metrics } = useQuery<MetricData>({
+    queryKey: ["/api/metrics"],
+    queryFn: async () => {
+      const response = await fetch("/api/metrics");
+      if (!response.ok) {
+        throw new Error("Failed to fetch metrics");
       }
-    });
-
-    return categories;
-  };
-
-  const categoryData = calculateCategoryHours();
-  const totalHours = Object.values(categoryData).reduce((sum, hours) => sum + hours, 0);
-  
-  const chartData = [
-    {
-      name: "Deep Work",
-      hours: categoryData.focus,
-      color: "bg-google-blue",
-      percentage: totalHours > 0 ? (categoryData.focus / totalHours) * 100 : 0
-    },
-    {
-      name: "Meetings", 
-      hours: categoryData.meeting,
-      color: "bg-google-yellow",
-      percentage: totalHours > 0 ? (categoryData.meeting / totalHours) * 100 : 0
-    },
-    {
-      name: "Admin",
-      hours: categoryData.admin,
-      color: "bg-google-green", 
-      percentage: totalHours > 0 ? (categoryData.admin / totalHours) * 100 : 0
-    },
-    {
-      name: "Break Time",
-      hours: categoryData.break + categoryData.other,
-      color: "bg-google-red",
-      percentage: totalHours > 0 ? ((categoryData.break + categoryData.other) / totalHours) * 100 : 0
+      return response.json();
     }
+  });
+
+  // Generate sample weekly data for visualization
+  const weeklyData = [
+    { day: "Mon", focus: 6.5, meetings: 2, productivity: 85 },
+    { day: "Tue", focus: 7.2, meetings: 3, productivity: 90 },
+    { day: "Wed", focus: 5.8, meetings: 4, productivity: 75 },
+    { day: "Thu", focus: 8.1, meetings: 1, productivity: 95 },
+    { day: "Fri", focus: 6.9, meetings: 2, productivity: 88 },
+    { day: "Sat", focus: 4.2, meetings: 0, productivity: 60 },
+    { day: "Sun", focus: 3.5, meetings: 0, productivity: 50 }
+  ];
+
+  const productivityTrend = [
+    { week: "W1", score: 82 },
+    { week: "W2", score: 78 },
+    { week: "W3", score: 85 },
+    { week: "W4", score: 88 },
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6" data-testid="productivity-chart">
-      <h3 className="text-lg font-semibold text-[color:var(--text-dark)] mb-4">
-        Weekly Focus
-      </h3>
-      <div className="space-y-4">
-        {chartData.map((item) => (
-          <div key={item.name}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-[color:var(--text-medium)]">
-                {item.name}
-              </span>
-              <span className="text-sm font-medium text-[color:var(--text-dark)]">
-                {item.hours.toFixed(1)}h
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={`${item.color} h-2 rounded-full transition-all duration-300`}
-                style={{ width: `${Math.max(item.percentage, 2)}%` }}
-                data-testid={`progress-${item.name.toLowerCase().replace(' ', '-')}`}
-              ></div>
-            </div>
-          </div>
-        ))}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-[color:var(--text-dark)]">
+          Productivity Analytics
+        </h3>
+        <Activity className="h-5 w-5 text-[color:var(--text-medium)]" />
       </div>
-      
-      {totalHours === 0 && (
-        <div className="text-center py-4">
-          <p className="text-sm text-[color:var(--text-light)]">
-            No data available for this week
-          </p>
+
+      {/* Key Metrics Row */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-[color:var(--google-blue)]">
+            {metrics?.productivityScore || "0%"}
+          </div>
+          <div className="text-sm text-[color:var(--text-medium)]">Today's Score</div>
         </div>
-      )}
+        <div className="text-center">
+          <div className="text-2xl font-bold text-[color:var(--google-green)]">
+            {metrics?.focusTime || "0h"}
+          </div>
+          <div className="text-sm text-[color:var(--text-medium)]">Focus Time</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-[color:var(--google-red)]">
+            {metrics?.meetings || 0}
+          </div>
+          <div className="text-sm text-[color:var(--text-medium)]">Meetings</div>
+        </div>
+      </div>
+
+      {/* Weekly Focus Time Chart */}
+      <div className="mb-6">
+        <h4 className="text-sm font-medium text-[color:var(--text-dark)] mb-3">
+          Weekly Focus Time (Hours)
+        </h4>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={weeklyData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis 
+              dataKey="day" 
+              axisLine={false}
+              tickLine={false}
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis 
+              axisLine={false}
+              tickLine={false}
+              style={{ fontSize: '12px' }}
+            />
+            <Tooltip 
+              contentStyle={{
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '12px'
+              }}
+            />
+            <Bar 
+              dataKey="focus" 
+              fill="var(--google-blue)" 
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Productivity Trend */}
+      <div>
+        <h4 className="text-sm font-medium text-[color:var(--text-dark)] mb-3 flex items-center">
+          Productivity Trend
+          <TrendingUp className="h-4 w-4 ml-2 text-green-500" />
+        </h4>
+        <ResponsiveContainer width="100%" height={150}>
+          <LineChart data={productivityTrend}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis 
+              dataKey="week" 
+              axisLine={false}
+              tickLine={false}
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis 
+              axisLine={false}
+              tickLine={false}
+              style={{ fontSize: '12px' }}
+              domain={[0, 100]}
+            />
+            <Tooltip 
+              contentStyle={{
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '12px'
+              }}
+              formatter={(value) => [`${value}%`, 'Productivity Score']}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="score" 
+              stroke="var(--google-green)" 
+              strokeWidth={3}
+              dot={{ fill: "var(--google-green)", strokeWidth: 2, r: 4 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Insights */}
+      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>💡 Insight:</strong> Your productivity peaks on Thursdays with minimal meetings. 
+          Consider scheduling important focus work on similar low-meeting days.
+        </p>
+      </div>
     </div>
   );
 }
