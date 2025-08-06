@@ -1,87 +1,108 @@
-import { CalendarDays, Clock, Users, TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 
-interface MetricCardsProps {
-  metrics?: {
-    todayEvents: number;
-    focusTime: string;
-    meetings: number;
-    productivityScore: string;
-  };
+import { TrendingUp, TrendingDown, Clock, Target, Calendar, BarChart3 } from "lucide-react";
+
+interface MetricCardProps {
+  title: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  icon: React.ReactNode;
+  description?: string;
 }
 
-export default function MetricCards({ metrics }: MetricCardsProps) {
-  const cards = [
-    {
-      title: "Today's Events",
-      value: metrics?.todayEvents || 0,
-      change: "+12% from yesterday",
-      trend: "up",
-      icon: CalendarDays,
-      color: "google-blue",
-      bgColor: "bg-blue-50",
-    },
+function MetricCard({ title, value, change, isPositive, icon, description }: MetricCardProps) {
+  return (
+    <div className="glass rounded-xl p-6 hover-lift hover-glow transition-all duration-300 animate-fade-in border border-white/20">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className={`p-2.5 rounded-lg ${isPositive ? 'bg-gradient-success' : 'bg-gradient-danger'} bg-opacity-10`}>
+              <div className={isPositive ? 'text-green-600' : 'text-red-600'}>
+                {icon}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[color:var(--text-medium)] uppercase tracking-wide">
+                {title}
+              </p>
+              {description && (
+                <p className="text-xs text-[color:var(--text-light)] mt-1">
+                  {description}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <p className="text-3xl font-bold text-[color:var(--text-dark)] tracking-tight">
+              {value}
+            </p>
+            
+            <div className="flex items-center space-x-2">
+              <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                isPositive 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                <span>{change}</span>
+              </div>
+              <span className="text-xs text-[color:var(--text-light)]">vs last week</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function MetricCards() {
+  const metrics = [
     {
       title: "Focus Time",
-      value: metrics?.focusTime || "0h",
-      change: "+8% this week",
-      trend: "up",
-      icon: Clock,
-      color: "google-green",
-      bgColor: "bg-green-50",
-    },
-    {
-      title: "Meetings",
-      value: metrics?.meetings || 0,
-      change: "-3% from last week",
-      trend: "down",
-      icon: Users,
-      color: "google-yellow",
-      bgColor: "bg-yellow-50",
+      value: "6.5h",
+      change: "+12%",
+      isPositive: true,
+      icon: <Clock size={20} />,
+      description: "Deep work sessions"
     },
     {
       title: "Productivity Score",
-      value: metrics?.productivityScore || "0%",
-      change: "+5% improvement",
-      trend: "up",
-      icon: TrendingUp,
-      color: "google-red",
-      bgColor: "bg-red-50",
+      value: "87%",
+      change: "+5%",
+      isPositive: true,
+      icon: <Target size={20} />,
+      description: "Goal completion rate"
     },
+    {
+      title: "Meeting Efficiency",
+      value: "78%",
+      change: "-3%",
+      isPositive: false,
+      icon: <Calendar size={20} />,
+      description: "Time well spent"
+    },
+    {
+      title: "Task Completion",
+      value: "24",
+      change: "+18%",
+      isPositive: true,
+      icon: <BarChart3 size={20} />,
+      description: "Tasks completed today"
+    }
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {cards.map((card, index) => {
-        const Icon = card.icon;
-        const TrendIcon = card.trend === "up" ? ArrowUp : ArrowDown;
-        const trendColor = card.trend === "up" ? "text-google-green" : "text-google-red";
-        
-        return (
-          <div
-            key={index}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-            data-testid={`metric-${card.title.toLowerCase().replace(/\s+/g, '-')}`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-[color:var(--text-medium)]">
-                  {card.title}
-                </p>
-                <p className="text-3xl font-bold text-[color:var(--text-dark)] mt-2">
-                  {card.value}
-                </p>
-                <p className={`text-sm mt-1 ${trendColor}`}>
-                  <TrendIcon className="inline h-3 w-3 mr-1" />
-                  {card.change}
-                </p>
-              </div>
-              <div className={`w-12 h-12 ${card.bgColor} rounded-xl flex items-center justify-center`}>
-                <Icon className={`h-6 w-6 text-[color:var(--${card.color})]`} />
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {metrics.map((metric, index) => (
+        <div
+          key={metric.title}
+          className="animate-fade-in"
+          style={{ animationDelay: `${index * 0.1}s` }}
+        >
+          <MetricCard {...metric} />
+        </div>
+      ))}
     </div>
   );
 }
