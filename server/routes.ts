@@ -228,11 +228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/metrics", async (req, res) => {
-    const userId = (req.session as any)?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
+  app.get("/api/metrics", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
 
     try {
       const today = new Date();
