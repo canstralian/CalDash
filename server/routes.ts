@@ -16,7 +16,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       access_type: 'offline',
       scope: scopes,
       prompt: 'consent',
-      state: req.user?.claims?.sub // Pass user ID in state
+      state: (req.user as any)?.claims?.sub // Pass user ID in state
     });
 
     res.json({ authUrl });
@@ -58,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update user tokens
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const expiry = tokens.expiry_date ? new Date(tokens.expiry_date) : new Date(Date.now() + 3600000);
       await storage.updateUserTokens(userId, tokens.access_token, tokens.refresh_token || "", expiry);
       
@@ -70,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/calendars", isAuthenticated, async (req: any, res) => {
-    const userId = req.user.claims.sub;
+    const userId = (req.user as any)?.claims?.sub;
 
     try {
       const calendars = await storage.getUserCalendars(userId);
@@ -82,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/calendars/sync", isAuthenticated, async (req: any, res) => {
-    const userId = req.user.claims.sub;
+    const userId = (req.user as any)?.claims?.sub;
 
     try {
       const user = await storage.getUser(userId);

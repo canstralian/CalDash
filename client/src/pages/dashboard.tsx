@@ -23,7 +23,7 @@ export function Dashboard() {
   const { data: calendars = [] } = useQuery({
     queryKey: ["/api/calendars"],
     enabled: !!user,
-  });
+  }) as { data: any[] };
 
   const handleConnectCalendar = async () => {
     try {
