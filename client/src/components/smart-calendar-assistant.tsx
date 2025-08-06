@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Clock, Calendar, AlertCircle, CheckCircle, Plus } from "lucide-react";
 import { Event } from "@/lib/types";
 
@@ -17,24 +16,24 @@ interface Suggestion {
 
 export function SmartCalendarAssistant({ events }: SmartCalendarAssistantProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  
+
   const generateSuggestions = (): Suggestion[] => {
     const newSuggestions: Suggestion[] = [];
-    
+
     // Check for back-to-back meetings
     const sortedEvents = [...events].sort((a, b) => 
       new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     );
-    
+
     for (let i = 0; i < sortedEvents.length - 1; i++) {
       const current = sortedEvents[i];
       const next = sortedEvents[i + 1];
-      
+
       if (current.category === "meeting" && next.category === "meeting") {
         const currentEnd = new Date(current.endTime);
         const nextStart = new Date(next.startTime);
         const gap = nextStart.getTime() - currentEnd.getTime();
-        
+
         if (gap < 15 * 60 * 1000) { // Less than 15 minutes
           newSuggestions.push({
             type: "buffer",
@@ -46,13 +45,13 @@ export function SmartCalendarAssistant({ events }: SmartCalendarAssistantProps) 
         }
       }
     }
-    
+
     // Check for meeting preparation
     const importantMeetings = events.filter(e => 
       e.category === "meeting" && 
       (e.attendeesCount > 3 || e.title.toLowerCase().includes("review"))
     );
-    
+
     importantMeetings.forEach(meeting => {
       newSuggestions.push({
         type: "preparation",
@@ -62,14 +61,14 @@ export function SmartCalendarAssistant({ events }: SmartCalendarAssistantProps) 
         priority: "medium"
       });
     });
-    
+
     return newSuggestions.slice(0, 5); // Show top 5 suggestions
   };
-  
+
   useEffect(() => {
     setSuggestions(generateSuggestions());
   }, [events]);
-  
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high": return "text-red-600 bg-red-50 border-red-200";
@@ -78,7 +77,7 @@ export function SmartCalendarAssistant({ events }: SmartCalendarAssistantProps) 
       default: return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
-  
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "buffer": return <Clock size={16} />;
@@ -88,13 +87,13 @@ export function SmartCalendarAssistant({ events }: SmartCalendarAssistantProps) 
       default: return <Plus size={16} />;
     }
   };
-  
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <h3 className="text-lg font-semibold text-[color:var(--text-dark)] mb-4">
         Calendar Assistant
       </h3>
-      
+
       <div className="space-y-3">
         {suggestions.map((suggestion, index) => (
           <div
@@ -115,7 +114,7 @@ export function SmartCalendarAssistant({ events }: SmartCalendarAssistantProps) 
             </div>
           </div>
         ))}
-        
+
         {suggestions.length === 0 && (
           <div className="text-center py-6">
             <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
