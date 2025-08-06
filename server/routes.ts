@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCalendarSchema, insertEventSchema } from "@shared/schema";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { google } from 'googleapis';
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
@@ -9,94 +10,67 @@ const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "http://localhost:5000/auth/google/callback";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
-  // Google OAuth routes
-  app.get("/auth/google", (req, res) => {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Google Calendar integration routes
+  app.post("/api/google-auth", isAuthenticated, (req, res) => {
     const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
     
     const scopes = [
       'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile'
     ];
 
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'consent'
+      prompt: 'consent',
+      state: req.user?.claims?.sub // Pass user ID in state
     });
 
-    res.redirect(authUrl);
+    res.json({ authUrl });
   });
 
-  app.get("/auth/google/callback", async (req, res) => {
-    const { code } = req.query;
+  app.post("/api/google-callback", isAuthenticated, async (req, res) => {
+    const { code } = req.body;
     if (!code) {
       return res.status(400).json({ message: "Authorization code not found" });
     }
 
     try {
       const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-      const { tokens } = await oauth2Client.getToken(code as string);
+      const { tokens } = await oauth2Client.getToken(code);
       
-      if (!tokens.access_token || !tokens.refresh_token) {
+      if (!tokens.access_token) {
         return res.status(400).json({ message: "Failed to obtain tokens" });
       }
 
-      // Get user info
-      oauth2Client.setCredentials(tokens);
-      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-      const userInfo = await oauth2.userinfo.get();
-      
-      if (!userInfo.data.email) {
-        return res.status(400).json({ message: "Failed to get user email" });
-      }
-
-      // Create or update user
-      let user = await storage.getUserByUsername(userInfo.data.email);
-      if (!user) {
-        user = await storage.createUser({
-          username: userInfo.data.email,
-          password: "google_oauth" // placeholder for OAuth users
-        });
-      }
-
-      // Update tokens
+      // Update user tokens
+      const userId = req.user?.claims?.sub;
       const expiry = tokens.expiry_date ? new Date(tokens.expiry_date) : new Date(Date.now() + 3600000);
-      await storage.updateUserTokens(user.id, tokens.access_token, tokens.refresh_token, expiry);
-
-      // Store user ID in session
-      (req.session as any).userId = user.id;
+      await storage.updateUserTokens(userId, tokens.access_token, tokens.refresh_token || "", expiry);
       
-      res.redirect("/?auth=success");
+      res.json({ success: true });
     } catch (error) {
-      console.error("OAuth callback error:", error);
-      res.redirect("/?auth=error");
+      console.error("Google OAuth callback error:", error);
+      res.status(500).json({ message: "Failed to connect Google Calendar" });
     }
   });
 
-  // API routes
-  app.get("/api/user", async (req, res) => {
-    const userId = (req.session as any)?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const user = await storage.getUser(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Don't send tokens to client
-    const { googleAccessToken, googleRefreshToken, password, ...publicUser } = user;
-    res.json(publicUser);
-  });
-
-  app.get("/api/calendars", async (req, res) => {
-    const userId = (req.session as any)?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
+  app.get("/api/calendars", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
 
     try {
       const calendars = await storage.getUserCalendars(userId);
@@ -107,11 +81,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/calendars/sync", async (req, res) => {
-    const userId = (req.session as any)?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
+  app.post("/api/calendars/sync", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
 
     try {
       const user = await storage.getUser(userId);
@@ -154,11 +125,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/events", async (req, res) => {
-    const userId = (req.session as any)?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
+  app.get("/api/events", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
 
     try {
       const { start, end } = req.query;
@@ -173,11 +141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/events/sync", async (req, res) => {
-    const userId = (req.session as any)?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
+  app.post("/api/events/sync", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
 
     try {
       const user = await storage.getUser(userId);
