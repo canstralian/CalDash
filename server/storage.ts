@@ -73,7 +73,13 @@ export class MemStorage implements IStorage {
 
   async createCalendar(userId: string, insertCalendar: InsertCalendar): Promise<Calendar> {
     const id = randomUUID();
-    const calendar: Calendar = { ...insertCalendar, id, userId };
+    const calendar: Calendar = { 
+      ...insertCalendar, 
+      id, 
+      userId,
+      isConnected: insertCalendar.isConnected ?? true,
+      isPrimary: insertCalendar.isPrimary ?? false,
+    };
     this.calendars.set(id, calendar);
     return calendar;
   }
@@ -126,7 +132,17 @@ export class MemStorage implements IStorage {
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     const id = randomUUID();
-    const event: Event = { ...insertEvent, id };
+    const event: Event = { 
+      ...insertEvent, 
+      id,
+      description: insertEvent.description ?? null,
+      location: insertEvent.location ?? null,
+      category: insertEvent.category ?? "other",
+      isAllDay: insertEvent.isAllDay ?? false,
+      attendeesCount: insertEvent.attendeesCount ?? 0,
+      isRecurring: insertEvent.isRecurring ?? false,
+      meetingUrl: insertEvent.meetingUrl ?? null,
+    };
     this.events.set(id, event);
     return event;
   }

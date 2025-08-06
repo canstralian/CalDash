@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, Calendar, AlertCircle, CheckCircle, Plus } from "lucide-react";
 import { Event } from "@/lib/types";
 
@@ -66,7 +66,7 @@ export function SmartCalendarAssistant({ events }: SmartCalendarAssistantProps) 
     return newSuggestions.slice(0, 5); // Show top 5 suggestions
   };
   
-  React.useEffect(() => {
+  useEffect(() => {
     setSuggestions(generateSuggestions());
   }, [events]);
   

@@ -4,7 +4,7 @@ import { TimeAllocationChart } from "@/components/time-allocation-chart";
 import { ProductivityChart } from "@/components/productivity-chart";
 import { QuickActions } from "@/components/quick-actions";
 import { UpcomingEvents } from "@/components/upcoming-events";
-import { CalendarPreview } from "@/components/calendar-preview";
+import CalendarPreview from "@/components/calendar-preview";
 import { SmartAnalytics } from "@/components/smart-analytics";
 import { SmartCalendarAssistant } from "@/components/smart-calendar-assistant";
 import { GoalTracker } from "@/components/goal-tracker";
@@ -109,3 +109,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;
