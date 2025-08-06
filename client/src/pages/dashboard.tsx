@@ -3,8 +3,15 @@ import { MetricCards } from "@/components/metric-cards";
 import { TimeAllocationChart } from "@/components/time-allocation-chart";
 import { ProductivityChart } from "@/components/productivity-chart";
 import { QuickActions } from "@/components/quick-actions";
-import UpcomingEvents from "@/components/upcoming-events";
+import { UpcomingEvents } from "@/components/upcoming-events";
 import { CalendarPreview } from "@/components/calendar-preview";
+import { SmartAnalytics } from "@/components/smart-analytics";
+import { SmartCalendarAssistant } from "@/components/smart-calendar-assistant";
+import { GoalTracker } from "@/components/goal-tracker";
+import { TeamInsights } from "@/components/team-insights";
+import { IntegrationsHub } from "@/components/integrations-hub";
+import { WellnessDashboard } from "@/components/wellness-dashboard";
+import { AdvancedVisualizations } from "@/components/advanced-visualizations";
 
 export function Dashboard() {
   return (
@@ -55,6 +62,44 @@ export function Dashboard() {
         {/* Calendar Preview */}
         <section className="animate-slide-up" style={{ animationDelay: '0.7s' }}>
           <CalendarPreview />
+        </section>
+
+        {/* Smart Analytics & Calendar Assistant */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+          <section className="animate-slide-up" style={{ animationDelay: '0.8s' }}>
+            <SmartAnalytics events={[]} />
+          </section>
+          
+          <section className="animate-slide-up" style={{ animationDelay: '0.9s' }}>
+            <SmartCalendarAssistant events={[]} />
+          </section>
+        </div>
+
+        {/* Goals & Team Insights */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+          <section className="animate-slide-up" style={{ animationDelay: '1.0s' }}>
+            <GoalTracker />
+          </section>
+          
+          <section className="animate-slide-up" style={{ animationDelay: '1.1s' }}>
+            <TeamInsights />
+          </section>
+        </div>
+
+        {/* Integrations & Wellness */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+          <section className="animate-slide-up" style={{ animationDelay: '1.2s' }}>
+            <IntegrationsHub />
+          </section>
+          
+          <section className="animate-slide-up" style={{ animationDelay: '1.3s' }}>
+            <WellnessDashboard />
+          </section>
+        </div>
+
+        {/* Advanced Visualizations */}
+        <section className="animate-slide-up" style={{ animationDelay: '1.4s' }}>
+          <AdvancedVisualizations events={[]} />
         </section>
       </div>
 

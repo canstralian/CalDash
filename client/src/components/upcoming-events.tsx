@@ -18,7 +18,7 @@ const categoryColors = {
   other: "bg-purple-400"
 };
 
-export default function UpcomingEvents({ events = [] }: UpcomingEventsProps) {
+export function UpcomingEvents({ events = [] }: UpcomingEventsProps) {
   const now = new Date();
   
   // Get upcoming events (next 7 days, excluding events that have already started)
