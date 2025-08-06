@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -37,6 +37,26 @@ export const events = pgTable("events", {
   isRecurring: boolean("is_recurring").default(false),
   meetingUrl: text("meeting_url"),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  calendars: many(calendars),
+}));
+
+export const calendarsRelations = relations(calendars, ({ one, many }) => ({
+  user: one(users, {
+    fields: [calendars.userId],
+    references: [users.id],
+  }),
+  events: many(events),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  calendar: one(calendars, {
+    fields: [events.calendarId],
+    references: [calendars.id],
+  }),
+}));
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

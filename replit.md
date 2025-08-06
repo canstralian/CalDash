@@ -36,6 +36,8 @@ Preferred communication style: Simple, everyday language.
 - **Schema Management**: Drizzle Kit for database migrations and schema versioning
 - **Connection**: Neon Database serverless PostgreSQL for cloud deployment
 - **Data Validation**: Zod schemas for runtime type checking and API validation
+- **Storage Implementation**: DatabaseStorage class using Drizzle ORM for type-safe database operations
+- **Relations**: Explicitly modeled using Drizzle relations operator for users → calendars → events
 
 ### Authentication & Authorization
 - **OAuth Provider**: Google OAuth 2.0 with calendar read permissions

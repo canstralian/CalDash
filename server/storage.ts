@@ -1,4 +1,6 @@
-import { type User, type InsertUser, type Calendar, type InsertCalendar, type Event, type InsertEvent } from "@shared/schema";
+import { users, calendars, events, type User, type InsertUser, type Calendar, type InsertCalendar, type Event, type InsertEvent } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte, inArray, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -23,150 +25,143 @@ export interface IStorage {
   deleteEventsByCalendar(calendarId: string): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private calendars: Map<string, Calendar>;
-  private events: Map<string, Event>;
-
-  constructor() {
-    this.users = new Map();
-    this.calendars = new Map();
-    this.events = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id, googleAccessToken: null, googleRefreshToken: null, googleTokenExpiry: null };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async updateUserTokens(userId: string, accessToken: string, refreshToken: string, expiry: Date): Promise<User> {
-    const user = this.users.get(userId);
-    if (!user) throw new Error("User not found");
+    const [user] = await db
+      .update(users)
+      .set({
+        googleAccessToken: accessToken,
+        googleRefreshToken: refreshToken,
+        googleTokenExpiry: expiry,
+      })
+      .where(eq(users.id, userId))
+      .returning();
     
-    const updatedUser: User = {
-      ...user,
-      googleAccessToken: accessToken,
-      googleRefreshToken: refreshToken,
-      googleTokenExpiry: expiry,
-    };
-    this.users.set(userId, updatedUser);
-    return updatedUser;
+    if (!user) throw new Error("User not found");
+    return user;
   }
 
   async getUserCalendars(userId: string): Promise<Calendar[]> {
-    return Array.from(this.calendars.values()).filter(
-      (calendar) => calendar.userId === userId,
-    );
+    return await db.select().from(calendars).where(eq(calendars.userId, userId));
   }
 
   async createCalendar(userId: string, insertCalendar: InsertCalendar): Promise<Calendar> {
     const id = randomUUID();
-    const calendar: Calendar = { 
-      ...insertCalendar, 
-      id, 
-      userId,
-      isConnected: insertCalendar.isConnected ?? true,
-      isPrimary: insertCalendar.isPrimary ?? false,
-    };
-    this.calendars.set(id, calendar);
+    const [calendar] = await db
+      .insert(calendars)
+      .values({
+        id,
+        userId,
+        ...insertCalendar,
+      })
+      .returning();
     return calendar;
   }
 
   async updateCalendar(id: string, updates: Partial<Calendar>): Promise<Calendar | undefined> {
-    const calendar = this.calendars.get(id);
-    if (!calendar) return undefined;
-    
-    const updatedCalendar = { ...calendar, ...updates };
-    this.calendars.set(id, updatedCalendar);
-    return updatedCalendar;
+    const [calendar] = await db
+      .update(calendars)
+      .set(updates)
+      .where(eq(calendars.id, id))
+      .returning();
+    return calendar || undefined;
   }
 
   async deleteCalendar(id: string): Promise<boolean> {
-    return this.calendars.delete(id);
+    const result = await db.delete(calendars).where(eq(calendars.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getCalendarEvents(calendarId: string, startDate?: Date, endDate?: Date): Promise<Event[]> {
-    let events = Array.from(this.events.values()).filter(
-      (event) => event.calendarId === calendarId,
-    );
+    let whereConditions = [eq(events.calendarId, calendarId)];
 
     if (startDate) {
-      events = events.filter(event => new Date(event.startTime) >= startDate);
+      whereConditions.push(gte(events.startTime, startDate));
     }
     if (endDate) {
-      events = events.filter(event => new Date(event.endTime) <= endDate);
+      whereConditions.push(lte(events.endTime, endDate));
     }
 
-    return events.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    const result = await db
+      .select()
+      .from(events)
+      .where(and(...whereConditions))
+      .orderBy(events.startTime);
+    
+    return result;
   }
 
   async getUserEvents(userId: string, startDate?: Date, endDate?: Date): Promise<Event[]> {
     const userCalendars = await this.getUserCalendars(userId);
     const calendarIds = userCalendars.map(cal => cal.id);
     
-    let events = Array.from(this.events.values()).filter(
-      (event) => calendarIds.includes(event.calendarId),
-    );
+    if (calendarIds.length === 0) return [];
+
+    let whereConditions = [inArray(events.calendarId, calendarIds)];
 
     if (startDate) {
-      events = events.filter(event => new Date(event.startTime) >= startDate);
+      whereConditions.push(gte(events.startTime, startDate));
     }
     if (endDate) {
-      events = events.filter(event => new Date(event.endTime) <= endDate);
+      whereConditions.push(lte(events.endTime, endDate));
     }
 
-    return events.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    const result = await db
+      .select()
+      .from(events)
+      .where(and(...whereConditions))
+      .orderBy(events.startTime);
+    
+    return result;
   }
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     const id = randomUUID();
-    const event: Event = { 
-      ...insertEvent, 
-      id,
-      description: insertEvent.description ?? null,
-      location: insertEvent.location ?? null,
-      category: insertEvent.category ?? "other",
-      isAllDay: insertEvent.isAllDay ?? false,
-      attendeesCount: insertEvent.attendeesCount ?? 0,
-      isRecurring: insertEvent.isRecurring ?? false,
-      meetingUrl: insertEvent.meetingUrl ?? null,
-    };
-    this.events.set(id, event);
+    const [event] = await db
+      .insert(events)
+      .values({
+        id,
+        ...insertEvent,
+      })
+      .returning();
     return event;
   }
 
   async updateEvent(id: string, updates: Partial<Event>): Promise<Event | undefined> {
-    const event = this.events.get(id);
-    if (!event) return undefined;
-    
-    const updatedEvent = { ...event, ...updates };
-    this.events.set(id, updatedEvent);
-    return updatedEvent;
+    const [event] = await db
+      .update(events)
+      .set(updates)
+      .where(eq(events.id, id))
+      .returning();
+    return event || undefined;
   }
 
   async deleteEvent(id: string): Promise<boolean> {
-    return this.events.delete(id);
+    const result = await db.delete(events).where(eq(events.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async deleteEventsByCalendar(calendarId: string): Promise<void> {
-    const eventsToDelete = Array.from(this.events.entries())
-      .filter(([_, event]) => event.calendarId === calendarId)
-      .map(([id, _]) => id);
-    
-    eventsToDelete.forEach(id => this.events.delete(id));
+    await db.delete(events).where(eq(events.calendarId, calendarId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
